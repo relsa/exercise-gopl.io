@@ -24,13 +24,13 @@ func TestPopCount(t *testing.T) {
 }
 
 func BenchmarkPopCount(b *testing.B) {
-	for i := 0; i < 10000000; i++ {
+	for i := 0; i < b.N; i++ {
 		PopCount(uint64(i))
 	}
 }
 
 func BenchmarkPopCountOrigin(b *testing.B) {
-	for i := 0; i < 10000000; i++ {
+	for i := 0; i < b.N; i++ {
 		popcount.PopCount(uint64(i))
 	}
 }
