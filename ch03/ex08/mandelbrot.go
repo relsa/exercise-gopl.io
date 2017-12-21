@@ -10,82 +10,69 @@ import (
 	"os"
 )
 
-type fltCmplx struct {
-	r *big.Float
-	i *big.Float
+type bigFloatComplex struct {
+	re, im *big.Float
 }
 
-func (x *fltCmplx) add(y *fltCmplx) *fltCmplx {
-	r := new(big.Float)
-	r.Add(x.r, y.r)
-
-	i := new(big.Float)
-	i.Add(x.i, y.i)
-
-	return &fltCmplx{r, i}
+func newBigFloatComplex(re, im float64) *bigFloatComplex {
+	return &bigFloatComplex{big.NewFloat(re), big.NewFloat(im)}
 }
 
-func (x *fltCmplx) mul(y *fltCmplx) *fltCmplx {
-	ra := new(big.Float)
-	ra.Mul(x.r, y.r)
-	rb := new(big.Float)
-	rb.Mul(x.i, y.i)
-	r := new(big.Float)
-	r.Sub(ra, rb)
-
-	ia := new(big.Float)
-	ia.Mul(x.i, y.r)
-	ib := new(big.Float)
-	ib.Mul(x.r, y.i)
-	i := new(big.Float)
-	i.Add(ia, ib)
-
-	return &fltCmplx{r, i}
+func (b *bigFloatComplex) add(x, y *bigFloatComplex) *bigFloatComplex {
+	b.re.Add(x.re, y.re)
+	b.im.Add(x.im, y.im)
+	return b
 }
 
-func (x *fltCmplx) abs() float64 {
-	r, _ := x.r.Float64()
-	i, _ := x.i.Float64()
-	return math.Hypot(r, i)
+func (b *bigFloatComplex) mul(x, y *bigFloatComplex) *bigFloatComplex {
+	b.re.Sub(
+		new(big.Float).Mul(x.re, y.re),
+		new(big.Float).Mul(x.im, y.im),
+	)
+	b.im.Add(
+		new(big.Float).Mul(x.re, y.im),
+		new(big.Float).Mul(x.im, y.re),
+	)
+	return b
 }
 
-type ratCmplx struct {
-	r *big.Rat
-	i *big.Rat
+func (b *bigFloatComplex) abs() float64 {
+	// 敗北感
+	re, _ := b.re.Float64()
+	im, _ := b.im.Float64()
+	return math.Hypot(re, im)
 }
 
-func (x *ratCmplx) add(y *ratCmplx) *ratCmplx {
-	r := new(big.Rat)
-	r.Add(x.r, y.r)
-
-	i := new(big.Rat)
-	i.Add(x.i, y.i)
-
-	return &ratCmplx{r, i}
+type bigRatComplex struct {
+	re, im *big.Rat
 }
 
-func (x *ratCmplx) mul(y *ratCmplx) *ratCmplx {
-	ra := new(big.Rat)
-	ra.Mul(x.r, y.r)
-	rb := new(big.Rat)
-	rb.Mul(x.i, y.i)
-	r := new(big.Rat)
-	r.Sub(ra, rb)
-
-	ia := new(big.Rat)
-	ia.Mul(x.i, y.r)
-	ib := new(big.Rat)
-	ib.Mul(x.r, y.i)
-	i := new(big.Rat)
-	i.Add(ia, ib)
-
-	return &ratCmplx{r, i}
+func newBigRatComplex(re, im float64) *bigRatComplex {
+	return &bigRatComplex{new(big.Rat).SetFloat64(re), new(big.Rat).SetFloat64(im)}
 }
 
-func (x *ratCmplx) abs() float64 {
-	r, _ := x.r.Float64()
-	i, _ := x.i.Float64()
-	return math.Hypot(r, i)
+func (b *bigRatComplex) add(x, y *bigRatComplex) *bigRatComplex {
+	b.re.Add(x.re, y.re)
+	b.im.Add(x.im, y.im)
+	return b
+}
+
+func (b *bigRatComplex) mul(x, y *bigRatComplex) *bigRatComplex {
+	b.re.Sub(
+		new(big.Rat).Mul(x.re, y.re),
+		new(big.Rat).Mul(x.im, y.im),
+	)
+	b.im.Add(
+		new(big.Rat).Mul(x.re, y.im),
+		new(big.Rat).Mul(x.im, y.re),
+	)
+	return b
+}
+
+func (x *bigRatComplex) abs() float64 {
+	re, _ := x.re.Float64()
+	im, _ := x.im.Float64()
+	return math.Hypot(re, im)
 }
 
 func main() {
@@ -106,15 +93,11 @@ func main() {
 			// var z complex64 = complex(float32(x), float32(y))
 			// img.Set(px, py, mandelbrot64(z))
 
-			// z := fltCmplx{big.NewFloat(x), big.NewFloat(y)}
-			// img.Set(px, py, mandelbrotF(&z))
+			// var z *bigFloatComplex = newBigFloatComplex(x, y)
+			// img.Set(px, py, mandelbrotF(z))
 
-			r := &big.Rat{}
-			r.SetFloat64(x)
-			i := &big.Rat{}
-			i.SetFloat64(y)
-			z := ratCmplx{r, i}
-			img.Set(px, py, mandelbrotR(&z))
+			var z *bigRatComplex = newBigRatComplex(x, y)
+			img.Set(px, py, mandelbrotR(z))
 		}
 	}
 	png.Encode(os.Stdout, img)
@@ -148,27 +131,29 @@ func mandelbrot64(z complex64) color.Color {
 	return color.RGBA{0, 0, 0, 0xff}
 }
 
-func mandelbrotF(z *fltCmplx) color.Color {
+func mandelbrotF(z *bigFloatComplex) color.Color {
 	const iterations = 200
 	const contrast = 15
 
-	var v *fltCmplx
+	var v *bigFloatComplex = newBigFloatComplex(0.0, 0.0)
 	for n := uint8(0); n < iterations; n++ {
-		v = (v.mul(v)).add(z)
-		if v.abs() > 2 {
+		v.mul(v, v)
+		v.add(v, z)
+		if v.abs() > 2.0 {
 			return color.Gray{255 - contrast*n}
 		}
 	}
 	return color.RGBA{0, 0, 0, 0xff}
 }
 
-func mandelbrotR(z *ratCmplx) color.Color {
+func mandelbrotR(z *bigRatComplex) color.Color {
 	const iterations = 200
 	const contrast = 15
 
-	var v *ratCmplx
+	var v *bigRatComplex = newBigRatComplex(0.0, 0.0)
 	for n := uint8(0); n < iterations; n++ {
-		v = (v.mul(v)).add(z)
+		v.mul(v, v)
+		v.add(v, z)
 		if v.abs() > 2 {
 			return color.Gray{255 - contrast*n}
 		}
