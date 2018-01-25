@@ -1,0 +1,2 @@
+CelsiusFlag関数の第2引数の型はCelsiusのため、
+ヘルプメッセージの表示の際にはCelsiusのString()メソッドが呼び出される。
