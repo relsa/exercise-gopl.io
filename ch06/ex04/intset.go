@@ -124,7 +124,7 @@ func (s *IntSet) Elems() []int {
 			continue
 		}
 		for j := 0; j < 64; j++ {
-			if ((word>>uint(j))^1)%2 == 0 {
+			if ((word >> uint(j)) & 1) == 1 {
 				elems = append(elems, 64*i+j)
 			}
 		}
