@@ -1,6 +1,7 @@
 package sexpr
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -94,5 +95,41 @@ func TestMarshalInterface(t *testing.T) {
 	}
 	if got := string(b); got != want {
 		t.Errorf("invalid value. got %q, want %q", got, want)
+	}
+}
+
+func TestUnmarchalBool(t *testing.T) {
+	in := "t"
+	want := true
+
+	var got bool
+	Unmarshal([]byte(in), &got)
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("invalid value. got %v, want %v", got, want)
+	}
+}
+
+func TestUnmarchalFloat(t *testing.T) {
+	in := "1.5"
+	want := 1.5
+
+	var got float64
+	Unmarshal([]byte(in), &got)
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("invalid value. got %v, want %v", got, want)
+	}
+}
+
+func TestUnmarchalInterface(t *testing.T) {
+	in := "(\"[]int\" (1 2 3))"
+	want := []int{1, 2, 3}
+
+	var got interface{}
+	Unmarshal([]byte(in), &got)
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("invalid value. got %v, want %v", got, want)
 	}
 }

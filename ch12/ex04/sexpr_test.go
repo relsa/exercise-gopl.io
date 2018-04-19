@@ -37,6 +37,7 @@ func Test(t *testing.T) {
 		t.Fatalf("Marshal failed: %v", err)
 	}
 	t.Logf("Marshal() = %s\n", data)
+	// fmt.Printf("%s\n", data)
 }
 
 func TestMarshalComplex(t *testing.T) {
@@ -86,8 +87,10 @@ func TestMarshalBool(t *testing.T) {
 }
 func TestMarshalInterface(t *testing.T) {
 	var x interface{} = []int{1, 2, 3}
-	want := "(\"[]int\" (1 2 3))"
-
+	// ("[]int" (1
+	//           2
+	//           3))
+	want := "(\"[]int\" (1\n          2\n          3))"
 	b, err := Marshal(&x)
 	if err != nil {
 		t.Fatal(err)
