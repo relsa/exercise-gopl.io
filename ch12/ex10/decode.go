@@ -196,7 +196,7 @@ func asType(typ string) reflect.Type {
 	if typ[0] == '[' {
 		i, j := 0, strings.IndexRune(typ, ']')
 		count, _ := strconv.Atoi(typ[i+1 : j])
-		elem := typ[i+1 : j]
+		elem := typ[j+1:]
 		return reflect.ArrayOf(count, asType(elem))
 	}
 	if strings.HasPrefix(typ, "map") {
